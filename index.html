@@ -150,8 +150,6 @@
   .meta-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-light); }
   .meta-value { font-size: 13px; color: var(--ink-mid); font-weight: 400; }
 
-  .meta-right { text-align: right; }
-
   /* SUMMARY BAR */
   .summary-bar {
     background: var(--accent-light);
@@ -252,54 +250,14 @@
     color: var(--ink);
     font-size: 13px;
     font-weight: 400;
-    max-width: 260px;
     line-height: 1.5;
   }
 
-  .col-priority { width: 80px; }
-  .col-status { width: 90px; }
-  .col-due { width: 90px; font-family: 'DM Mono', monospace; font-size: 11px; }
-  .col-progress { width: 100px; }
-  .col-remarks { font-size: 11.5px; color: var(--ink-light); font-style: italic; max-width: 160px; line-height: 1.5; }
-
-  .p-tag {
-    display: inline-block;
-    font-family: 'DM Mono', monospace;
-    font-size: 9.5px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 2px 7px;
-    border-radius: 2px;
-    font-weight: 500;
-  }
-  .p-Critical { background: #fbeaea; color: var(--red); }
-  .p-High { background: #fdf3e7; color: var(--amber); }
-  .p-Medium { background: #e8eef5; color: var(--accent); }
-  .p-Low { background: #eaf4ef; color: var(--green); }
-
-  .s-tag {
-    display: inline-block;
-    font-family: 'DM Mono', monospace;
-    font-size: 9.5px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 2px 7px;
-    border-radius: 2px;
-  }
-  .s-Pending { background: #fdf3e7; color: var(--amber); }
-  .s-InProgress, .s-In-Progress { background: #e8eef5; color: var(--accent); }
-  .s-Completed { background: #eaf4ef; color: var(--green); }
-  .s-Overdue { background: #fbeaea; color: var(--red); }
-  .s-Open { background: #f0eaf8; color: #6030a0; }
-  .s-Delayed { background: #fdf3e7; color: var(--amber); }
+  .col-due { width: 110px; font-family: 'DM Mono', monospace; font-size: 11px; }
+  .col-remarks { font-size: 11.5px; color: var(--ink-light); font-style: italic; width: 220px; line-height: 1.5; }
 
   .due-overdue { color: var(--red); }
   .due-soon { color: var(--amber); }
-
-  .prog-wrap { display: flex; align-items: center; gap: 8px; padding-top: 4px; }
-  .prog-track { flex: 1; height: 3px; background: var(--paper-rule); border-radius: 2px; overflow: hidden; }
-  .prog-fill { height: 100%; border-radius: 2px; }
-  .prog-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--ink-light); min-width: 28px; text-align: right; }
 
   /* REPORT FOOTER */
   .report-footer {
@@ -353,9 +311,6 @@
     letter-spacing: 0.08em;
     border-top: var(--rule);
   }
-
-  /* DIVIDER between priority sections */
-  .section-divider { margin: 0; border: none; border-top: var(--rule); }
 </style>
 </head>
 <body>
@@ -431,8 +386,6 @@
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQG1qIshT_3v5uE4D9OZi3QqIWvdVVYuku0IDg8DeH8jwdwkIrUAS41_1yqY_rAcIt7lO-0kPwdNhea/pub?gid=0&single=true&output=csv';
 
 let allData = [];
-
-// Date setup
 const today = new Date();
 document.getElementById('reportDate').textContent = today.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 
@@ -474,15 +427,6 @@ function fmtDate(ds) {
   if (isNaN(d)) return ds;
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
-
-function progColor(p) {
-  if (p >= 80) return '#2d6a4a';
-  if (p >= 40) return '#1a3a5c';
-  if (p >= 20) return '#a06020';
-  return '#b94040';
-}
-
-function statusKey(s) { return (s||'').replace(/\s+/g,'-'); }
 
 async function fetchData() {
   try {
@@ -541,31 +485,18 @@ function renderTable(data) {
         <tr>
           <th class="col-sno">#</th>
           <th>Description</th>
-          <th class="col-priority">Priority</th>
-          <th class="col-status">Status</th>
           <th class="col-due">Due Date</th>
-          <th class="col-progress">Progress</th>
           <th>Remarks</th>
         </tr>
       </thead>
       <tbody>
         ${data.map((r, i) => {
-          const pct = Math.min(100, Math.max(0, parseFloat(r.Progress)||0));
-          const priority = (r.Priority||'').trim();
           const status = (r.Status||'').trim();
           const dc = dueDateClass(r.DueDate, status);
           return `<tr>
             <td class="col-sno">${r.SNo||i+1}</td>
             <td class="col-desc">${r.Description||'—'}</td>
-            <td class="col-priority"><span class="p-tag p-${priority}">${priority||'—'}</span></td>
-            <td class="col-status"><span class="s-tag s-${statusKey(status)}">${status||'—'}</span></td>
             <td class="col-due ${dc}">${fmtDate(r.DueDate)}</td>
-            <td class="col-progress">
-              <div class="prog-wrap">
-                <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${progColor(pct)}"></div></div>
-                <span class="prog-label">${pct}%</span>
-              </div>
-            </td>
             <td class="col-remarks">${r.Remarks||'—'}</td>
           </tr>`;
         }).join('')}
@@ -573,21 +504,16 @@ function renderTable(data) {
     </table>`;
 }
 
-// PDF DOWNLOAD — pending items only, A4 formatted
 async function downloadPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-  const pending = allData.filter(r => {
-    const s = (r.Status||'').toLowerCase();
-    return s !== 'completed';
-  });
+  const pending = allData.filter(r => (r.Status||'').toLowerCase() !== 'completed');
 
   const W = 210, ML = 18, MR = 18, TW = W - ML - MR;
   let y = 18;
   const dateStr = today.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 
-  // Fonts helpers
   const setFont = (style, size, color) => {
     doc.setFont('helvetica', style);
     doc.setFontSize(size);
@@ -630,11 +556,10 @@ async function downloadPDF() {
   y += 14;
   line(ML, y, W-MR, y, [220,220,218], 0.3); y += 8;
 
-  // TABLE HEADER
-  const colWidths = [10, 72, 22, 22, 24, 22];
-  const colX = [ML];
-  for (let i=0; i<colWidths.length-1; i++) colX.push(colX[i]+colWidths[i]);
-  const headers = ['#','Description','Priority','Status','Due Date','Progress'];
+  // TABLE HEADER (Modified columns)
+  const colWidths = [12, 132, 30];
+  const colX = [ML, ML + colWidths[0], ML + colWidths[0] + colWidths[1]];
+  const headers = ['#','Description','Due Date'];
 
   setFont('normal', 7, [138,138,138]);
   headers.forEach((h,i) => doc.text(h.toUpperCase(), colX[i], y));
@@ -643,24 +568,17 @@ async function downloadPDF() {
 
   // ROWS
   pending.forEach((r, idx) => {
-    // Check page break
     if (y > 268) {
-      doc.addPage();
-      y = 18;
+      doc.addPage(); y = 18;
       setFont('normal', 7, [138,138,138]);
       headers.forEach((h,i) => doc.text(h.toUpperCase(), colX[i], y));
       y += 2;
       line(ML, y, W-MR, y, [180,180,180], 0.4); y += 5;
     }
 
-    const pct = Math.min(100,Math.max(0,parseFloat(r.Progress)||0));
-    const status = (r.Status||'').trim();
-    const priority = (r.Priority||'').trim();
-    const desc = r.Description || '—';
-    const descLines = doc.splitTextToSize(desc, colWidths[1] - 2);
-    const rowH = Math.max(7, descLines.length * 4.5);
+    const descLines = doc.splitTextToSize(r.Description || '—', colWidths[1] - 5);
+    const rowH = Math.max(8, descLines.length * 4.5);
 
-    // Alternating row bg
     if (idx % 2 === 0) {
       doc.setFillColor(248, 248, 246);
       doc.rect(ML, y-4, TW, rowH+1, 'F');
@@ -668,36 +586,12 @@ async function downloadPDF() {
 
     setFont('normal', 7.5, [138,138,138]);
     doc.text(String(r.SNo||idx+1), colX[0], y);
-
-    setFont('normal', 8, [26,26,26]);
+    setFont('normal', 8.5, [26,26,26]);
     doc.text(descLines, colX[1], y);
-
-    // Priority badge
-    const pColors = { Critical:[185,64,64], High:[160,96,32], Medium:[26,58,92], Low:[45,106,74] };
-    const pc = pColors[priority] || [100,100,100];
-    setFont('bold', 7, pc);
-    doc.text(priority||'—', colX[2], y);
-
-    // Status
-    const sColors = { Pending:[160,96,32], Completed:[45,106,74], Overdue:[185,64,64] };
-    const sc = sColors[status] || [26,58,92];
-    setFont('normal', 7, sc);
-    doc.text(status||'—', colX[3], y);
-
-    // Due date
-    const dc = isOverdue(r.DueDate,status) ? [185,64,64] : [74,74,74];
-    setFont('normal', 7, dc);
-    doc.text(fmtDate(r.DueDate), colX[4], y);
-
-    // Progress bar
-    const barX = colX[5], barY = y-2, barW = 18, barH = 2.5;
-    doc.setFillColor(230,230,228);
-    doc.roundedRect(barX, barY, barW, barH, 0.5, 0.5, 'F');
-    const fc = pct >= 80 ? [45,106,74] : pct >= 40 ? [26,58,92] : pct >= 20 ? [160,96,32] : [185,64,64];
-    doc.setFillColor(...fc);
-    if (pct > 0) doc.roundedRect(barX, barY, barW * pct/100, barH, 0.5, 0.5, 'F');
-    setFont('normal', 6.5, [138,138,138]);
-    doc.text(`${pct}%`, barX + barW + 2, y);
+    
+    const dc = isOverdue(r.DueDate, r.Status) ? [185,64,64] : [74,74,74];
+    setFont('normal', 8, dc);
+    doc.text(fmtDate(r.DueDate), colX[2], y);
 
     y += rowH;
     line(ML, y-1, W-MR, y-1, [235,233,228], 0.2);
@@ -709,9 +603,8 @@ async function downloadPDF() {
   line(ML, y, W-MR, y, [26,26,26], 0.5); y += 5;
   setFont('normal', 7.5, [138,138,138]);
   doc.text('GM Action Monitoring System · Confidential · Internal Use Only', ML, y);
-  doc.text(`${pending.length} pending action${pending.length!==1?'s':''} as at ${dateStr}`, W-MR, y, { align:'right' });
+  doc.text(`${pending.length} pending items as at ${dateStr}`, W-MR, y, { align:'right' });
 
-  // Page numbers
   const pages = doc.getNumberOfPages();
   for (let p = 1; p <= pages; p++) {
     doc.setPage(p);
