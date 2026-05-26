@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GM Action Monitoring System</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #040b14;
+    --bg-panel: #070f1c;
+    --bg-card: #0a1628;
+    --bg-card-hover: #0d1e38;
+    --accent-cyan: #00e5ff;
+    --accent-amber: #ffb300;
+    --accent-green: #00e676;
+    --accent-red: #ff1744;
+    --accent-purple: #d500f9;
+    --text-primary: #e0f0ff;
+    --text-secondary: #6a8aaa;
+    --text-dim: #344d66;
+    --border: rgba(0, 229, 255, 0.12);
+    --border-bright: rgba(0, 229, 255, 0.35);
+    --glow-cyan: 0 0 20px rgba(0, 229, 255, 0.3);
+    --glow-amber: 0 0 20px rgba(255, 179, 0, 0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: 'Exo 2', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 10% 0%, rgba(0, 229, 255, 0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 90% 100%, rgba(213, 0, 249, 0.04) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(0, 229, 255, 0.025) 39px, rgba(0, 229, 255, 0.025) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(0, 229, 255, 0.025) 39px, rgba(0, 229, 255, 0.025) 40px);
+  }
+
+  /* HEADER */
+  .header {
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(0, 229, 255, 0.05) 0%, transparent 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+
+  .header-left { display: flex; align-items: center; gap: 16px; }
+
+  .logo-icon {
+    width: 44px; height: 44px;
+    border: 2px solid var(--accent-cyan);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: var(--glow-cyan), inset 0 0 12px rgba(0,229,255,0.1);
+    animation: pulse-border 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: var(--glow-cyan), inset 0 0 12px rgba(0,229,255,0.1); }
+    50% { box-shadow: 0 0 35px rgba(0,229,255,0.5), inset 0 0 20px rgba(0,229,255,0.2); }
+  }
+
+  .header-title { font-family: 'Rajdhani', sans-serif; }
+  .header-title h1 { font-size: 22px; font-weight: 700; color: var(--accent-cyan); letter-spacing: 3px; text-transform: uppercase; }
+  .header-title p { font-size: 11px; color: var(--text-secondary); letter-spacing: 2px; text-transform: uppercase; font-family: 'Share Tech Mono', monospace; }
+
+  .header-right { display: flex; align-items: center; gap: 20px; }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: var(--accent-green);
+    letter-spacing: 1px;
+  }
+  .live-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    box-shadow: 0 0 8px var(--accent-green);
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .clock {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; color: var(--text-secondary);
+    letter-spacing: 1px;
+  }
+
+  /* KPI STRIP */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+  }
+
+  .kpi-card {
+    background: var(--bg-panel);
+    padding: 16px 20px;
+    display: flex; flex-direction: column; gap: 4px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .kpi-card.cyan::before { background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent); }
+  .kpi-card.amber::before { background: linear-gradient(90deg, transparent, var(--accent-amber), transparent); }
+  .kpi-card.green::before { background: linear-gradient(90deg, transparent, var(--accent-green), transparent); }
+  .kpi-card.red::before { background: linear-gradient(90deg, transparent, var(--accent-red), transparent); }
+  .kpi-card.purple::before { background: linear-gradient(90deg, transparent, var(--accent-purple), transparent); }
+
+  .kpi-label { font-size: 10px; color: var(--text-secondary); letter-spacing: 2px; text-transform: uppercase; font-family: 'Share Tech Mono', monospace; }
+  .kpi-value { font-family: 'Rajdhani', sans-serif; font-size: 32px; font-weight: 700; line-height: 1; }
+  .kpi-card.cyan .kpi-value { color: var(--accent-cyan); }
+  .kpi-card.amber .kpi-value { color: var(--accent-amber); }
+  .kpi-card.green .kpi-value { color: var(--accent-green); }
+  .kpi-card.red .kpi-value { color: var(--accent-red); }
+  .kpi-card.purple .kpi-value { color: var(--accent-purple); }
+  .kpi-sub { font-size: 10px; color: var(--text-dim); font-family: 'Share Tech Mono', monospace; }
+
+  /* MAIN LAYOUT */
+  .main { display: grid; grid-template-columns: 260px 1fr; gap: 0; min-height: calc(100vh - 120px); }
+
+  /* SIDEBAR */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    display: flex; flex-direction: column; gap: 24px;
+    background: var(--bg-panel);
+  }
+
+  .sidebar-section h3 {
+    font-size: 10px; letter-spacing: 2px; color: var(--text-dim);
+    text-transform: uppercase; font-family: 'Share Tech Mono', monospace;
+    margin-bottom: 12px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .filter-btn {
+    width: 100%; padding: 8px 12px;
+    background: transparent; border: 1px solid transparent;
+    border-radius: 4px; color: var(--text-secondary);
+    font-family: 'Exo 2', sans-serif; font-size: 13px;
+    text-align: left; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: all 0.2s; margin-bottom: 4px;
+  }
+  .filter-btn:hover { background: rgba(0,229,255,0.05); border-color: var(--border); color: var(--text-primary); }
+  .filter-btn.active { background: rgba(0,229,255,0.1); border-color: var(--border-bright); color: var(--accent-cyan); }
+  .filter-count {
+    background: rgba(0,229,255,0.15); color: var(--accent-cyan);
+    font-family: 'Share Tech Mono', monospace; font-size: 11px;
+    padding: 1px 7px; border-radius: 10px;
+  }
+
+  .priority-dot {
+    width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px;
+  }
+  .p-critical { background: var(--accent-red); box-shadow: 0 0 6px var(--accent-red); }
+  .p-high { background: var(--accent-amber); box-shadow: 0 0 6px var(--accent-amber); }
+  .p-medium { background: var(--accent-cyan); box-shadow: 0 0 6px var(--accent-cyan); }
+  .p-low { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+
+  /* CONTENT AREA */
+  .content { padding: 24px; overflow: auto; }
+
+  .content-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .content-title { font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 600; color: var(--text-secondary); letter-spacing: 2px; text-transform: uppercase; }
+
+  .search-box {
+    position: relative; display: flex; align-items: center;
+  }
+  .search-box input {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 4px; padding: 8px 12px 8px 36px;
+    color: var(--text-primary); font-family: 'Exo 2', sans-serif;
+    font-size: 13px; outline: none; width: 240px;
+    transition: border-color 0.2s;
+  }
+  .search-box input:focus { border-color: var(--accent-cyan); }
+  .search-box input::placeholder { color: var(--text-dim); }
+  .search-icon { position: absolute; left: 10px; color: var(--text-dim); font-size: 14px; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead tr {
+    background: rgba(0, 229, 255, 0.05);
+    border-bottom: 1px solid var(--border-bright);
+  }
+  th {
+    padding: 12px 14px; text-align: left;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--accent-cyan);
+    font-weight: 400; white-space: nowrap;
+    cursor: pointer; user-select: none;
+  }
+  th:hover { color: #fff; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    animation: rowIn 0.4s ease both;
+  }
+  tbody tr:hover { background: var(--bg-card-hover); }
+  @keyframes rowIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+
+  td {
+    padding: 13px 14px; font-size: 13px;
+    vertical-align: middle;
+  }
+
+  .sno {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text-dim); font-size: 12px;
+  }
+
+  .desc { color: var(--text-primary); max-width: 280px; line-height: 1.5; }
+
+  .priority-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 3px;
+    font-size: 11px; font-weight: 600; letter-spacing: 1px;
+    text-transform: uppercase; font-family: 'Share Tech Mono', monospace;
+    white-space: nowrap;
+  }
+  .priority-badge.Critical { background: rgba(255,23,68,0.15); color: var(--accent-red); border: 1px solid rgba(255,23,68,0.3); }
+  .priority-badge.High { background: rgba(255,179,0,0.15); color: var(--accent-amber); border: 1px solid rgba(255,179,0,0.3); }
+  .priority-badge.Medium { background: rgba(0,229,255,0.1); color: var(--accent-cyan); border: 1px solid rgba(0,229,255,0.25); }
+  .priority-badge.Low { background: rgba(0,230,118,0.1); color: var(--accent-green); border: 1px solid rgba(0,230,118,0.25); }
+
+  .status-chip {
+    display: inline-block; padding: 3px 10px; border-radius: 3px;
+    font-size: 11px; letter-spacing: 1px;
+    text-transform: uppercase; font-family: 'Share Tech Mono', monospace;
+    white-space: nowrap;
+  }
+  .status-chip.Completed { background: rgba(0,230,118,0.1); color: var(--accent-green); border: 1px solid rgba(0,230,118,0.25); }
+  .status-chip.InProgress, .status-chip.In\ Progress { background: rgba(0,229,255,0.1); color: var(--accent-cyan); border: 1px solid rgba(0,229,255,0.25); }
+  .status-chip.Pending { background: rgba(255,179,0,0.1); color: var(--accent-amber); border: 1px solid rgba(255,179,0,0.25); }
+  .status-chip.Overdue { background: rgba(255,23,68,0.1); color: var(--accent-red); border: 1px solid rgba(255,23,68,0.25); }
+  .status-chip.Open { background: rgba(213,0,249,0.1); color: var(--accent-purple); border: 1px solid rgba(213,0,249,0.25); }
+  .status-chip.Delayed { background: rgba(255,179,0,0.1); color: var(--accent-amber); border: 1px solid rgba(255,179,0,0.25); }
+
+  .due-date {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .due-date.overdue { color: var(--accent-red); }
+  .due-date.soon { color: var(--accent-amber); }
+
+  .progress-cell { min-width: 120px; }
+  .progress-bar-wrap {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .progress-track {
+    flex: 1; height: 4px; background: rgba(255,255,255,0.08);
+    border-radius: 2px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 2px;
+    transition: width 1s cubic-bezier(0.4,0,0.2,1);
+  }
+  .progress-pct {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: var(--text-secondary);
+    min-width: 32px; text-align: right;
+  }
+
+  .remarks { font-size: 12px; color: var(--text-dim); max-width: 180px; font-style: italic; }
+
+  /* LOADING / ERROR */
+  .state-center {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 300px; gap: 16px;
+    color: var(--text-secondary); font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; letter-spacing: 1px;
+  }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent-cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-msg { text-align: center; padding: 48px; color: var(--text-dim); font-family: 'Share Tech Mono', monospace; font-size: 13px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deep); }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+
+  @media (max-width: 900px) {
+    .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+    .main { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo-icon">⬡</div>
+    <div class="header-title">
+      <h1>GM Action Monitoring</h1>
+      <p>General Manager · Operations Command · Real-Time Tracker</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+</header>
+
+<div class="kpi-strip" id="kpiStrip">
+  <div class="kpi-card cyan"><div class="kpi-label">Total Actions</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-sub">All items</div></div>
+  <div class="kpi-card red"><div class="kpi-label">Critical</div><div class="kpi-value" id="kpi-critical">—</div><div class="kpi-sub">Priority: Critical</div></div>
+  <div class="kpi-card amber"><div class="kpi-label">In Progress</div><div class="kpi-value" id="kpi-inprogress">—</div><div class="kpi-sub">Active actions</div></div>
+  <div class="kpi-card green"><div class="kpi-label">Completed</div><div class="kpi-value" id="kpi-completed">—</div><div class="kpi-sub">Done</div></div>
+  <div class="kpi-card purple"><div class="kpi-label">Overdue</div><div class="kpi-value" id="kpi-overdue">—</div><div class="kpi-sub">Past due date</div></div>
+</div>
+
+<div class="main">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <h3>Filter by Status</h3>
+      <div id="statusFilters"></div>
+    </div>
+    <div class="sidebar-section">
+      <h3>Filter by Priority</h3>
+      <div id="priorityFilters"></div>
+    </div>
+  </aside>
+
+  <div class="content">
+    <div class="content-header">
+      <div class="content-title">Action Registry</div>
+      <div class="search-box">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="searchInput" placeholder="Search actions…" oninput="applyFilters()">
+      </div>
+    </div>
+    <div class="table-wrap" id="tableWrap">
+      <div class="state-center"><div class="spinner"></div><span>Fetching data stream…</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQG1qIshT_3v5uE4D9OZi3QqIWvdVVYuku0IDg8DeH8jwdwkIrUAS41_1yqY_rAcIt7lO-0kPwdNhea/pub?gid=0&single=true&output=csv';
+
+let allData = [];
+let activeStatus = 'All';
+let activePriority = 'All';
+let sortCol = null, sortDir = 1;
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-IN', { hour12: false });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// CSV Parser
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  return lines.slice(1).map(line => {
+    const vals = [];
+    let cur = '', inQ = false;
+    for (const ch of line) {
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    vals.push(cur.trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (vals[i] || '').replace(/^"|"$/g, ''));
+    return obj;
+  }).filter(r => r.SNo && r.SNo.trim());
+}
+
+// Fetch
+async function fetchData() {
+  try {
+    const res = await fetch(CSV_URL);
+    if (!res.ok) throw new Error('Network error');
+    const text = await res.text();
+    allData = parseCSV(text);
+    buildKPIs();
+    buildFilters();
+    applyFilters();
+  } catch (e) {
+    document.getElementById('tableWrap').innerHTML =
+      `<div class="state-center">⚠ Failed to load data. Check network or CSV URL.<br><small>${e.message}</small></div>`;
+  }
+}
+
+function isOverdue(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  return !isNaN(d) && d < new Date();
+}
+
+function buildKPIs() {
+  const total = allData.length;
+  const critical = allData.filter(r => (r.Priority || '').trim().toLowerCase() === 'critical').length;
+  const inprogress = allData.filter(r => {
+    const s = (r.Status || '').toLowerCase().replace(/\s+/g, '');
+    return s === 'inprogress';
+  }).length;
+  const completed = allData.filter(r => (r.Status || '').toLowerCase() === 'completed').length;
+  const overdue = allData.filter(r => isOverdue(r.DueDate) && (r.Status || '').toLowerCase() !== 'completed').length;
+
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-critical').textContent = critical;
+  document.getElementById('kpi-inprogress').textContent = inprogress;
+  document.getElementById('kpi-completed').textContent = completed;
+  document.getElementById('kpi-overdue').textContent = overdue;
+}
+
+function buildFilters() {
+  const statuses = ['All', ...new Set(allData.map(r => (r.Status || '').trim()).filter(Boolean))];
+  const priorities = ['All', ...new Set(allData.map(r => (r.Priority || '').trim()).filter(Boolean))];
+
+  const statusDiv = document.getElementById('statusFilters');
+  statusDiv.innerHTML = statuses.map(s => {
+    const count = s === 'All' ? allData.length : allData.filter(r => (r.Status||'').trim() === s).length;
+    return `<button class="filter-btn ${s === activeStatus ? 'active' : ''}" onclick="setStatusFilter('${s}')">${s}<span class="filter-count">${count}</span></button>`;
+  }).join('');
+
+  const priorityDiv = document.getElementById('priorityFilters');
+  priorityDiv.innerHTML = priorities.map(p => {
+    const count = p === 'All' ? allData.length : allData.filter(r => (r.Priority||'').trim() === p).length;
+    const dotClass = p === 'All' ? '' : `p-${p.toLowerCase()}`;
+    return `<button class="filter-btn ${p === activePriority ? 'active' : ''}" onclick="setPriorityFilter('${p}')">
+      ${p !== 'All' ? `<span class="priority-dot ${dotClass}"></span>` : ''}${p}<span class="filter-count">${count}</span>
+    </button>`;
+  }).join('');
+}
+
+function setStatusFilter(s) { activeStatus = s; buildFilters(); applyFilters(); }
+function setPriorityFilter(p) { activePriority = p; buildFilters(); applyFilters(); }
+
+function applyFilters() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  let data = allData;
+  if (activeStatus !== 'All') data = data.filter(r => (r.Status||'').trim() === activeStatus);
+  if (activePriority !== 'All') data = data.filter(r => (r.Priority||'').trim() === activePriority);
+  if (q) data = data.filter(r => Object.values(r).some(v => v.toLowerCase().includes(q)));
+  if (sortCol) {
+    data = [...data].sort((a, b) => {
+      const va = (a[sortCol] || '').toLowerCase();
+      const vb = (b[sortCol] || '').toLowerCase();
+      if (sortCol === 'Progress') return (parseFloat(a[sortCol]||0) - parseFloat(b[sortCol]||0)) * sortDir;
+      if (sortCol === 'DueDate') return (new Date(a[sortCol]) - new Date(b[sortCol])) * sortDir;
+      return va < vb ? -sortDir : va > vb ? sortDir : 0;
+    });
+  }
+  renderTable(data);
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
+  applyFilters();
+}
+
+function getProgressColor(pct) {
+  if (pct >= 80) return 'var(--accent-green)';
+  if (pct >= 40) return 'var(--accent-cyan)';
+  if (pct >= 20) return 'var(--accent-amber)';
+  return 'var(--accent-red)';
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function dueDateClass(dateStr, status) {
+  if (!dateStr || (status||'').toLowerCase() === 'completed') return '';
+  const d = new Date(dateStr);
+  const now = new Date();
+  if (isNaN(d)) return '';
+  if (d < now) return 'overdue';
+  const diff = (d - now) / (1000 * 60 * 60 * 24);
+  if (diff <= 7) return 'soon';
+  return '';
+}
+
+function renderTable(data) {
+  const wrap = document.getElementById('tableWrap');
+  if (!data.length) {
+    wrap.innerHTML = '<div class="empty-msg">NO RECORDS MATCH CURRENT FILTERS</div>';
+    return;
+  }
+  const cols = [
+    { key: 'SNo', label: '#' },
+    { key: 'Description', label: 'Description' },
+    { key: 'Priority', label: 'Priority' },
+    { key: 'Status', label: 'Status' },
+    { key: 'DueDate', label: 'Due Date' },
+    { key: 'Progress', label: 'Progress' },
+    { key: 'Remarks', label: 'Remarks' },
+  ];
+
+  const thead = `<thead><tr>${cols.map(c =>
+    `<th onclick="sortBy('${c.key}')">${c.label} ${sortCol===c.key?(sortDir===1?'↑':'↓'):''}</th>`
+  ).join('')}</tr></thead>`;
+
+  const tbody = data.map((r, i) => {
+    const pct = Math.min(100, Math.max(0, parseFloat(r.Progress) || 0));
+    const priority = (r.Priority || '').trim();
+    const status = (r.Status || '').trim();
+    const statusKey = status.replace(/\s+/g, '');
+    const pColor = getProgressColor(pct);
+    const dClass = dueDateClass(r.DueDate, status);
+
+    return `<tr style="animation-delay:${i * 0.04}s">
+      <td class="sno">${r.SNo || i+1}</td>
+      <td class="desc">${r.Description || '—'}</td>
+      <td><span class="priority-badge ${priority}"><span class="priority-dot p-${priority.toLowerCase()}"></span>${priority || '—'}</span></td>
+      <td><span class="status-chip ${statusKey}">${status || '—'}</span></td>
+      <td class="due-date ${dClass}">${formatDate(r.DueDate)}</td>
+      <td class="progress-cell">
+        <div class="progress-bar-wrap">
+          <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${pColor}"></div></div>
+          <div class="progress-pct">${pct}%</div>
+        </div>
+      </td>
+      <td class="remarks">${r.Remarks || '—'}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `<table>${thead}<tbody>${tbody}</tbody></table>`;
+}
+
+fetchData();
+</script>
+</body>
+</html>
